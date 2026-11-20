@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CodeShala AI Mentor</title><link rel="stylesheet" href="style.css"></head><body>
+<aside id="side"><div class="brand"><b>CodeShala AI Mentor</b><small>CodeShalaByKMFL</small></div>
+<div class="prof"><input id="name" placeholder="Your name" aria-label="Name"><select id="subj" aria-label="Subject"></select>
+<select id="lvl" aria-label="Level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+<nav><button data-v="dash">Dashboard</button><button data-v="tutor">AI Tutor</button><button data-v="quiz">Adaptive Quiz</button><button data-v="road">Roadmap</button><button data-v="code">Code Debugger</button><button data-v="stats">Analytics</button></nav>
+<span id="status" class="pill">checking…</span></aside>
+<main><button id="menu" aria-label="Menu">☰</button>
+<section id="v-dash"></section>
+<section id="v-tutor" hidden><h2>AI Tutor</h2><div class="row"><select id="clang"><option>Hinglish</option><option>English</option><option>Hindi</option></select><label><input type="checkbox" id="tts"> Speak replies</label></div>
+<div id="msgs" class="card"></div><div class="row"><input id="in" placeholder="Ask anything, e.g. explain loops" aria-label="Message"><button id="mic" class="btn alt">🎤</button><button id="send" class="btn">Send</button></div></section>
+<section id="v-quiz" hidden><h2>Adaptive Quiz</h2><div class="row"><select id="qt"></select><select id="ql"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select><select id="qn"><option>3</option><option selected>5</option><option>8</option></select><button id="gen" class="btn">Generate quiz</button></div><p id="qhint" class="mut"></p><div id="qbox"></div></section>
+<section id="v-road" hidden></section>
+<section id="v-code" hidden><h2>Code Explainer & Debugger</h2><textarea id="code" rows="10" placeholder="Paste Python, HTML, CSS or JavaScript (uses the subject selected in the sidebar)"></textarea><button id="explain" class="btn">Explain & debug</button><div id="cout" class="card" hidden></div></section>
+<section id="v-stats" hidden></section></main><script src="app.js"></script></body></html>

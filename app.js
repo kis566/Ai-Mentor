@@ -1,0 +1,47 @@
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const API=location.port==="8000"?"":"http://localhost:8000";
+const S=Object.assign({name:"",subject:"Python",level:"Beginner",results:[],completed:[],chat:[]},JSON.parse(localStorage.csm||"{}"));
+const save=()=>localStorage.csm=JSON.stringify(S);
+let CUR={},REC=null,QZ=null;
+const esc=t=>String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[c]);
+const md=t=>esc(t).replace(/```\w*\n?([\s\S]*?)```/g,"<pre>$1</pre>").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/`([^`\n]+)`/g,"<code>$1</code>");
+async function api(p,b){const r=await fetch(API+p,b?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}:{});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(Array.isArray(j.detail)?j.detail[0].msg:j.detail||"Request failed");return j}
+const key=t=>S.subject+":"+t,done=t=>S.completed.includes(key(t)),pct=r=>Math.round(100*r.score/r.total),mine=()=>S.results.filter(r=>r.subject==S.subject);
+async function rec(){try{REC=await api("/api/learning/recommend",{subject:S.subject,results:mine(),completed:CUR[S.subject].filter(done)})}catch(e){REC=null}}
+function go(v){$$("main section").forEach(s=>s.hidden=s.id!="v-"+v);$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v==v));({dash,road:roadInit,stats,quiz}[v]||(()=>0))();$("#side").classList.remove("open")}
+const learn=t=>{go("tutor");send(`Teach me "${t}" in ${S.subject} step by step with a simple example.`)};
+const quizOn=async t=>{go("quiz");await new Promise(r=>setTimeout(r,300));$("#qt").value=t;lvlFor()};
+const toggle=t=>{done(t)?S.completed=S.completed.filter(x=>x!=key(t)):S.completed.push(key(t));save();roadInit()};
+async function dash(){await rec();const T=CUR[S.subject],d=T.filter(done).length,rs=mine(),avg=rs.length?Math.round(100*rs.reduce((a,r)=>a+r.score,0)/rs.reduce((a,r)=>a+r.total,0)):null;
+$("#v-dash").innerHTML=`<h2>Welcome${S.name?", "+esc(S.name):""}!</h2><p class=mut>Your Personal AI Teacher: Learn, Practice & Improve.</p>
+<div class=grid><div class=card><span class=mut>Subject</span><div class=big>${S.subject}</div>${S.level}</div>
+<div class=card><span class=mut>Lessons completed</span><div class=big>${d}/${T.length}</div><div class=bar><i style="width:${100*d/T.length}%"></i></div></div>
+<div class=card><span class=mut>Quiz average</span><div class=big>${avg===null?"–":avg+"%"}</div>${rs.length} quizzes taken</div></div>
+<div class=card><b>Weak topics</b><p>${REC&&REC.weak.length?REC.weak.map(t=>`<span class="st weak">${t}</span> `).join(""):"<span class=mut>None detected yet. Take a quiz to get real insights.</span>"}</p></div>
+<div class=card><b>Recommended next</b>${REC&&REC.next.length?REC.next.map(n=>`<div class=top><span><b>${n.topic}</b><br><span class=mut>${n.reason}</span></span><button class="btn alt" onclick="learn('${n.topic}')">Learn</button></div>`).join("<hr>"):"<p class=mut>All caught up.</p>"}</div>`}
+function road(){const T=CUR[S.subject],st=REC?REC.status:{};$("#v-road").innerHTML=`<h2>${S.subject} Roadmap</h2><p class=mut>Status comes from your real quiz results (last 3 attempts per topic). Weak topics get easier practice.</p>`+T.map(t=>`<div class="card top"><span><b>${t}</b> <span class="st ${st[t]||"new"}">${st[t]||"new"}</span>${done(t)?" ✅":""}${REC&&REC.percent[t]!=null?` <span class=mut>${REC.percent[t]}%</span>`:""}</span><span class=row><button class="btn alt" onclick="learn('${t}')">Learn</button><button class="btn alt" onclick="quizOn('${t}')">Quiz</button><button class="btn alt" onclick="toggle('${t}')">${done(t)?"Undo":"Mark done"}</button></span></div>`).join("")}
+async function roadInit(){await rec();road()}
+function lvlFor(){const l=REC&&REC.level[$("#qt").value];if(l){$("#ql").value=l;$("#qhint").textContent=`Suggested level: ${l}, based on your past results.`}else $("#qhint").textContent="No history for this topic yet."}
+async function quiz(){await rec();$("#qt").innerHTML=CUR[S.subject].map(t=>`<option>${t}</option>`).join("");const w=REC&&REC.next[0];if(w)$("#qt").value=w.topic;lvlFor()}
+async function genQuiz(){$("#qbox").textContent="Generating…";try{QZ=await api("/api/quiz/generate",{subject:S.subject,topic:$("#qt").value,level:$("#ql").value,count:+$("#qn").value});
+$("#qbox").innerHTML=(QZ.demo?"<span class=tag>DEMO questions: sample content, results will not be saved</span>":"")+QZ.questions.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.q)}</b>${q.options.map((o,j)=>`<label class=opt><input type=radio name=q${i} value=${j}> ${esc(o)}</label>`).join("")}</div>`).join("")+`<button class=btn onclick=submitQ()>Submit answers</button>`}catch(e){$("#qbox").textContent="⚠️ "+e.message}}
+async function submitQ(){const a=QZ.questions.map((_,i)=>{const c=document.querySelector(`input[name=q${i}]:checked`);return c?+c.value:-1});
+try{const r=await api("/api/quiz/evaluate",{questions:QZ.questions,answers:a});
+if(!QZ.demo){S.results.push({subject:QZ.subject,topic:QZ.topic,level:QZ.level,score:r.score,total:r.total,date:Date.now()});if(r.percent>=80&&!S.completed.includes(QZ.subject+":"+QZ.topic))S.completed.push(QZ.subject+":"+QZ.topic);save()}
+$("#qbox").innerHTML=`<div class=card><div class=big>${r.score}/${r.total} (${r.percent}%)</div>${QZ.demo?"Demo quiz: not saved.":"Saved. Your roadmap has been updated."}</div>`+r.results.map((x,i)=>`<div class=card><b>${i+1}. ${esc(QZ.questions[i].q)}</b><br><span class=${x.correct?"good":"bad"}>${x.correct?"Correct":"Incorrect"}</span> · Answer: ${esc(QZ.questions[i].options[x.answer])}<br><span class=mut>${esc(x.explanation)}</span></div>`).join("")+`<button class=btn onclick="go('road')">See updated roadmap</button>`}catch(e){$("#qbox").textContent="⚠️ "+e.message}}
+function addMsg(role,t,demo){const d=document.createElement("div");d.className="m "+role;d.innerHTML=(demo?"<span class=tag>DEMO: not live AI</span>":"")+md(t);$("#msgs").append(d);d.scrollIntoView()}
+async function send(txt){txt=txt||$("#in").value.trim();if(!txt)return;$("#in").value="";addMsg("user",txt);const h=S.chat.slice(-10);S.chat.push({role:"user",content:txt});
+try{const r=await api("/api/chat",{message:txt,history:h,subject:S.subject,level:S.level,language:$("#clang").value});S.chat.push({role:"assistant",content:r.reply,demo:r.demo});addMsg("assistant",r.reply,r.demo);if($("#tts").checked&&!r.demo){const u=new SpeechSynthesisUtterance(r.reply.replace(/[`*#]/g,""));u.lang=$("#clang").value=="Hindi"?"hi-IN":"en-IN";speechSynthesis.speak(u)}}catch(e){addMsg("assistant","⚠️ "+e.message)}save()}
+function mic(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return alert("Speech recognition isn't supported in this browser. Please type your question.");const r=new R();r.lang=$("#clang").value=="Hindi"?"hi-IN":"en-IN";r.onresult=e=>{$("#in").value=e.results[0][0].transcript;send()};r.start()}
+async function explain(){const c=$("#code").value.trim();if(!c)return;const o=$("#cout");o.hidden=false;o.textContent="Analysing…";try{const r=await api("/api/code/explain",{language:S.subject,code:c,output_language:$("#clang").value});o.innerHTML=(r.demo?"<span class=tag>DEMO: not live AI</span>":"")+md(r.reply)}catch(e){o.textContent="⚠️ "+e.message}}
+function stats(){const rs=mine(),by={};rs.forEach(r=>(by[r.topic]=by[r.topic]||[]).push(pct(r)));const v=rs.map(pct),w=500,h=150,x=i=>20+(v.length>1?i*(w-40)/(v.length-1):(w-40)/2),y=p=>h-15-p*(h-30)/100;
+$("#v-stats").innerHTML=`<h2>Progress Analytics</h2><div class=card><b>Score over time (${S.subject})</b>${v.length?`<svg viewBox="0 0 ${w} ${h}"><polyline fill=none stroke="#8b5cf6" stroke-width=3 points="${v.map((p,i)=>x(i)+","+y(p)).join(" ")}"/>${v.map((p,i)=>`<circle cx=${x(i)} cy=${y(p)} r=5 fill="#22d3ee"><title>${p}%</title></circle>`).join("")}</svg><p class=mut>${v.length>1?`Change since first quiz: ${v.at(-1)-v[0]>=0?"+":""}${v.at(-1)-v[0]} points`:"Take more quizzes to see improvement."}</p>`:"<p class=mut>No quiz data yet.</p>"}</div>
+<div class=card><b>Accuracy by topic</b>${Object.entries(by).map(([t,a])=>{const m=Math.round(a.reduce((x,y)=>x+y)/a.length);return`<p>${t} <span class=mut>${m}% over ${a.length} quiz(zes)</span></p><div class=bar><i style="width:${m}%"></i></div>`}).join("")||"<p class=mut>No data yet.</p>"}</div>
+<div class=card><b>Completed topics:</b> ${CUR[S.subject].filter(done).join(", ")||"none yet"}</div>`}
+async function init(){try{CUR=await api("/api/curriculum");const h=await api("/api/health");$("#status").textContent=h.ai_live?"● Gemini connected":"● Demo mode (no API key)";$("#status").className="pill "+(h.ai_live?"ok":"demo")}catch(e){document.body.innerHTML="<p style='padding:2rem'>Backend not reachable. Run <code>uvicorn main:app --port 8000</code> inside /backend and open http://localhost:8000</p>";return}
+$("#subj").innerHTML=Object.keys(CUR).map(s=>`<option>${s}</option>`).join("");$("#subj").value=S.subject;$("#lvl").value=S.level;$("#name").value=S.name;
+$("#subj").onchange=e=>{S.subject=e.target.value;save();go("dash")};$("#lvl").onchange=e=>{S.level=e.target.value;save()};$("#name").oninput=e=>{S.name=e.target.value;save()};
+$$("nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));$("#menu").onclick=()=>$("#side").classList.toggle("open");
+$("#send").onclick=()=>send();$("#in").onkeydown=e=>e.key=="Enter"&&send();$("#mic").onclick=mic;$("#gen").onclick=genQuiz;$("#qt").onchange=lvlFor;$("#explain").onclick=explain;
+S.chat.forEach(m=>addMsg(m.role,m.content,m.demo));go("dash")}
+init();
