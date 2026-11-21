@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="CodeShala AI Mentor: learn, practice and improve with a personal programming tutor.">
+  <title>CodeShala AI Mentor</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#dashboard" aria-label="CodeShala AI Mentor dashboard">
+        <span class="brand-mark">C<span>.</span></span>
+        <span><strong>CodeShala</strong><small>AI MENTOR <i>by KMFL</i></small></span>
+      </a>
+
+      <div class="profile-block">
+        <label class="field-label" for="student-name">YOUR LEARNING SPACE</label>
+        <input id="student-name" type="text" maxlength="48" placeholder="Your name" autocomplete="name">
+        <label class="field-label" for="subject-select">SUBJECT</label>
+        <select id="subject-select" aria-label="Selected programming subject"></select>
+        <label class="field-label" for="level-select">YOUR LEVEL</label>
+        <select id="level-select" aria-label="Your learning level">
+          <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+        </select>
+      </div>
+
+      <div class="nav-label">LEARN</div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="dashboard"><span class="nav-glyph">▦</span>Overview</button>
+        <button class="nav-item" data-view="tutor"><span class="nav-glyph">✳</span>AI tutor</button>
+        <button class="nav-item" data-view="quiz"><span class="nav-glyph">◇</span>Practice quiz</button>
+        <button class="nav-item" data-view="roadmap"><span class="nav-glyph">↗</span>Learning path</button>
+        <button class="nav-item" data-view="code"><span class="nav-glyph">⌘</span>Code clinic</button>
+        <button class="nav-item" data-view="analytics"><span class="nav-glyph">▥</span>Progress</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="mentor-note"><span class="status-pulse"></span><div><strong>Personal learning</strong><small>Your progress stays on this device</small></div></div>
+        <div id="connection-status" class="connection-status" role="status">Connecting to mentor...</div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="menu-button" aria-label="Open navigation" aria-expanded="false">☰</button>
+        <div class="breadcrumb"><span>CodeShala</span><b>/</b><strong id="current-page">Overview</strong></div>
+        <div class="topbar-right"><button class="theme-toggle" id="theme-toggle" type="button" title="Switch to light mode" aria-label="Switch to light mode" aria-pressed="false"><span aria-hidden="true">☼</span></button><span class="date-label" id="today-label"></span><span class="avatar" id="avatar">S</span></div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="view active" id="view-dashboard" aria-labelledby="welcome-title"></section>
+        <section class="view" id="view-tutor" aria-labelledby="tutor-title" hidden>
+          <div class="page-heading"><div><span class="eyebrow">YOUR ON-DEMAND TEACHER</span><h1 id="tutor-title">Ask, learn, understand.</h1><p>Get a clear explanation at your pace, in the language that feels natural.</p></div><div class="heading-mark">✳</div></div>
+          <div class="tutor-toolbar"><label class="select-inline">Reply in <select id="chat-language"><option>Hinglish</option><option>English</option><option>Hindi</option></select></label><label class="toggle-label"><input id="speak-replies" type="checkbox"><span>Speak replies</span></label><button class="text-button" id="clear-chat" type="button">Clear conversation</button></div>
+          <div id="chat-messages" class="chat-panel" aria-live="polite"></div>
+          <form id="chat-form" class="chat-compose"><textarea id="chat-input" rows="1" maxlength="4000" placeholder="Ask about a concept, error, or code snippet..." aria-label="Your question"></textarea><button class="secondary-button voice-button" id="voice-input" type="button" title="Ask by voice" aria-label="Ask by voice">◉</button><button class="primary-button send-button" type="submit"><span>Send</span><b>↗</b></button></form>
+          <div class="suggestion-row"><span>TRY</span><button type="button" class="suggestion" data-prompt="Explain loops with a simple Python example">Explain loops</button><button type="button" class="suggestion" data-prompt="What is the difference between let and const in JavaScript?">let vs const</button><button type="button" class="suggestion" data-prompt="Teach me the CSS box model step by step">CSS box model</button></div>
+        </section>
+
+        <section class="view" id="view-quiz" aria-labelledby="quiz-title" hidden>
+          <div class="page-heading"><div><span class="eyebrow">PRACTICE THAT ADAPTS</span><h1 id="quiz-title">Check what you know.</h1><p>Every attempt helps shape a more useful learning path.</p></div><div class="heading-mark">◇</div></div>
+          <div class="quiz-controls"><label>Topic<select id="quiz-topic"></select></label><label>Difficulty<select id="quiz-level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label><button class="primary-button" id="generate-quiz" type="button">Build my quiz <span>↗</span></button></div>
+          <p id="quiz-hint" class="helper-line"></p><div id="quiz-content" class="quiz-content"></div>
+        </section>
+
+        <section class="view" id="view-roadmap" aria-labelledby="roadmap-title" hidden></section>
+
+        <section class="view" id="view-code" aria-labelledby="code-title" hidden>
+          <div class="page-heading"><div><span class="eyebrow">STATIC CODE REVIEW</span><h1 id="code-title">Bring your code to clinic.</h1><p>Understand what it does, spot likely issues, and learn why they happen.</p></div><div class="heading-mark">⌘</div></div>
+          <div class="code-workspace">
+            <div class="code-toolbar"><label>Language<select id="code-language"><option>Python</option><option>HTML</option><option>CSS</option><option>JavaScript</option></select></label><label>Explain in<select id="code-output-language"><option>English</option><option>Hinglish</option><option>Hindi</option></select></label><span>Not executed</span></div>
+            <textarea id="code-input" class="code-input" spellcheck="false" maxlength="8000" placeholder="Paste a code snippet here..."></textarea>
+            <div class="code-actions"><span>Up to 8,000 characters</span><button class="primary-button" id="explain-code" type="button">Explain code <span>↗</span></button></div>
+          </div>
+          <div id="code-result" class="answer-panel" hidden></div>
+        </section>
+
+        <section class="view" id="view-analytics" aria-labelledby="analytics-title" hidden></section>
+      </div>
+      <footer class="app-footer"><span>CodeShala AI Mentor</span><span>Learn with intention. Improve with evidence.</span></footer>
+    </main>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <script src="app.js"></script>
+</body>
+</html>
